@@ -1,5 +1,6 @@
 #include <algorithm>
 #include <cctype>
+#include <cstdlib>
 #include <filesystem>
 #include <fstream>
 #include <iostream>
@@ -234,6 +235,11 @@ void require_existing_path(const fs::path& path, const std::string& label)
     }
 }
 
+fs::path normalized_absolute_path(const fs::path& path)
+{
+    return fs::absolute(path).lexically_normal();
+}
+
 void validate_config(const Config& config)
 {
     require_existing_path(config.mc1_path, "MC1_PATH/--mc1");
@@ -254,8 +260,9 @@ void validate_config(const Config& config)
         throw std::runtime_error("Level number cannot be negative");
     }
 
-    if (fs::equivalent(config.mc1_path, config.output_path) ||
-        fs::equivalent(config.mc2_path, config.output_path))
+    const fs::path output = normalized_absolute_path(config.output_path);
+    if (output == normalized_absolute_path(config.mc1_path) ||
+        output == normalized_absolute_path(config.mc2_path))
     {
         throw std::runtime_error("Output must not overwrite either source installation");
     }
